@@ -17,6 +17,10 @@ func LookupIP(req models.Req) (models.Resp, error) {
 
 }
 
+func lookupDNSforIpAndServer() (string, error) {
+
+}
+
 func getResolver(dnsHost string) *net.Resolver {
 	r := &net.Resolver{
 		PreferGo: true,
