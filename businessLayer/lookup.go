@@ -21,7 +21,7 @@ func getResolver() (net.Resolver, error) {
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			d: net.Dialer{
-				Timeout: time.Millisecond = time.Duration(5000),
+				Timeout: time.Millisecond = time.Duration(5000),f
 			}
 		},
 	}
