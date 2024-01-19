@@ -1,0 +1,9 @@
+---
+general:
+  cors:
+    origins: ['http://localhost:4200']
+    methods: ['GET', 'POST']
+    headers: ['Origin', 'Content-Type']
+dns:
+  internalServers: ['192.168.0.1'] #ipv6 addresses must be enclosed in brackets []
+  externalServers: ['8.8.8.8']
