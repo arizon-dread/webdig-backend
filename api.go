@@ -23,17 +23,17 @@ func lookup(c *gin.Context) {
 	}
 	var status int = http.StatusOK
 	if isDNS() {
-		resp, err := businesslayer.LookupDNS(req)
+		resp, err := businesslayer.LookupIP(req)
 		if err != nil {
-			fmt.Printf("Unable to lookup dns, %v", err)
+			fmt.Printf("Unable to lookup IP, %v", err)
 			status = http.StatusBadRequest
 		}
 		c.JSON(status, resp)
 
 	} else {
-		resp, err := businesslayer.LookupIP(req)
+		resp, err := businesslayer.LookupDNS(req)
 		if err != nil {
-			fmt.Printf("Unable to lookup IP, %v", err)
+			fmt.Printf("Unable to lookup dns, %v", err)
 			status = http.StatusBadRequest
 		}
 		c.JSON(status, resp)

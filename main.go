@@ -7,5 +7,5 @@ import (
 func main() {
 
 	router := gin.Default()
-	router.POST("/dig", lookup)
+	router.POST("/api/dig", lookup)
 }
