@@ -14,7 +14,7 @@ func lookup(c *gin.Context) {
 	var req models.Req
 	c.BindJSON(&req)
 	isDNS := func() bool {
-		for _, r := range req.Body {
+		for _, r := range req.Host {
 			if unicode.IsLetter(r) {
 				return true
 			}
