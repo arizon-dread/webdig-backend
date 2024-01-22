@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/arizon-dread/webdig-backend/config"
@@ -17,7 +18,11 @@ func main() {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.General.Cors.Origins,
+		AllowHeaders: cfg.General.Cors.Headers,
 		AllowMethods: cfg.General.Cors.Methods,
+		AllowOriginFunc: func(origin string) bool {
+			return slices.Contains(cfg.General.Cors.Origins, origin)
+		},
 	}))
 	router.POST("/api/dig", lookup)
 	router.Run(":8080")
