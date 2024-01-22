@@ -62,7 +62,6 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 					}
 				}
 			} else {
-				
 				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
 				if len(resp.DnsNames) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
@@ -70,7 +69,6 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 					}
 				}
 			}
-
 			wg.Done()
 		}(&wg, i)
 
