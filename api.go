@@ -14,7 +14,7 @@ func lookup(c *gin.Context) {
 	c.BindJSON(&req)
 
 	var status int = http.StatusOK
-	resp, err := businesslayer.Lookup(req)
+	resp, err := businesslayer.Lookup(c.Request.Context(), req)
 	if err != nil {
 		fmt.Printf("Unable to lookup IP, %v", err)
 		status = http.StatusBadRequest

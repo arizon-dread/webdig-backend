@@ -12,7 +12,7 @@ import (
 	"github.com/arizon-dread/webdig-backend/models"
 )
 
-func Lookup(req models.Req) (models.Resp, error) {
+func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 	var resp models.Resp
 	cfg := config.GetInstance()
 	isDNS := func() bool {
@@ -24,9 +24,9 @@ func Lookup(req models.Req) (models.Resp, error) {
 		return false
 	}
 
-	lookupDNS(cfg.DNS.InternalServers, true, isDNS(), req, &resp)
+	lookupDNS(ctx, cfg.DNS.InternalServers, true, isDNS(), req, &resp)
 
-	lookupDNS(cfg.DNS.ExternalServers, false, isDNS(), req, &resp)
+	lookupDNS(ctx, cfg.DNS.ExternalServers, false, isDNS(), req, &resp)
 
 	if len(resp.DnsNames) == 0 && len(resp.ExternalIPAddresses) == 0 && len(resp.InternalIPAddresses) == 0 {
 		err := fmt.Errorf("could not find internal dns record")
@@ -36,20 +36,20 @@ func Lookup(req models.Req) (models.Resp, error) {
 	return resp, nil
 }
 
-func lookupDNS(dnsServers []string, isInternal bool, isDNS bool, req models.Req, resp *models.Resp) {
+func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS bool, req models.Req, resp *models.Resp) {
 	var wg sync.WaitGroup
 	wg.Add(len(dnsServers))
 	for i, ip := range dnsServers {
 		go func(wg *sync.WaitGroup, i int) {
-			if isDNS {
-				lookupDNSforIpAndServer(req.Host, ip, resp)
+			if !isDNS {
+				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
 				if len(resp.DnsNames) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
 						wg.Done()
 					}
 				}
 			} else {
-				ips := LookupIPforDNSandServer(req.Host, ip, resp)
+				ips := LookupIPforDNSandServer(ctx, req.Host, ip, resp)
 				if len(ips) > 0 {
 					for _, ip := range ips {
 						if isInternal {
@@ -77,10 +77,9 @@ func lookupDNS(dnsServers []string, isInternal bool, isDNS bool, req models.Req,
 	wg.Wait()
 }
 
-func LookupIPforDNSandServer(dnsName string, dnsServer string, resp *models.Resp) []net.IP {
+func LookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, resp *models.Resp) []net.IP {
 
-	r := getResolver(dnsServer)
-	var ctx context.Context
+	r := getResolver(ctx, dnsServer)
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
 		resp.Err = err
@@ -90,21 +89,20 @@ func LookupIPforDNSandServer(dnsName string, dnsServer string, resp *models.Resp
 	}
 }
 
-func lookupDNSforIpAndServer(ip string, dnsServer string, resp *models.Resp) {
+func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, resp *models.Resp) {
 
-	r := getResolver(dnsServer)
+	r := getResolver(ctx, dnsServer)
 
-	var ctx context.Context
-	hosts, err := r.LookupHost(ctx, ip)
+	host, err := r.LookupCNAME(ctx, ip)
 	if err != nil {
 		resp.Err = err
 	} else {
-		resp.DnsNames = append(resp.DnsNames, hosts...)
+		resp.DnsNames = append(resp.DnsNames, host)
 	}
 
 }
 
-func getResolver(dnsHost string) *net.Resolver {
+func getResolver(ctx context.Context, dnsHost string) *net.Resolver {
 	r := &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
