@@ -66,19 +66,11 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 					}
 				}
 			} else {
-				fmt.Printf("got ip: %v\n", req.Host)
-				ptrAddr, err := reverseIPAddress(req.Host)
-				fmt.Printf("reversed: %v\n", ptrAddr)
-				if err != nil {
-					resp.Err = fmt.Errorf("failed to read input as ip address.")
-				} else {
-					lookupDNSforIpAndServer(ctx, ptrAddr, ip, resp)
-					if len(resp.DnsNames) > 0 {
-						for len(dnsServers)-(i+1) > 0 {
-
-							fmt.Printf("ending waitGroup\n")
-							wg.Done()
-						}
+				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
+				if len(resp.DnsNames) > 0 {
+					for len(dnsServers)-(i+1) > 0 {
+						fmt.Printf("ending waitGroup\n")
+						wg.Done()
 					}
 				}
 			}
