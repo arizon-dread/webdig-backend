@@ -5,14 +5,22 @@ import (
 	"strings"
 
 	"github.com/arizon-dread/webdig-backend/config"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
 func main() {
 
+	readConfig()
+	cfg := config.GetInstance()
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: cfg.General.Cors.Origins,
+		AllowMethods: cfg.General.Cors.Methods,
+	}))
 	router.POST("/api/dig", lookup)
+	router.Run(":8080")
 }
 
 func readConfig() {
