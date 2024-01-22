@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -42,6 +43,7 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 	for i, ip := range dnsServers {
 		go func(wg *sync.WaitGroup, i int) {
 			if isDNS {
+				fmt.Printf("got dns: %v\n", req.Host)
 				ips := LookupIPforDNSandServer(ctx, req.Host, ip, resp)
 				if len(ips) > 0 {
 					for _, ip := range ips {
@@ -54,18 +56,29 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 				}
 				if isInternal && len(resp.InternalIPAddresses) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
+						fmt.Printf("ending waitGroup\n")
 						wg.Done()
 					}
 				} else if !isInternal && len(resp.ExternalIPAddresses) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
+						fmt.Printf("ending waitGroup\n")
 						wg.Done()
 					}
 				}
 			} else {
-				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
-				if len(resp.DnsNames) > 0 {
-					for len(dnsServers)-(i+1) > 0 {
-						wg.Done()
+				fmt.Printf("got ip: %v\n", req.Host)
+				ptrAddr, err := reverseIPAddress(req.Host)
+				fmt.Printf("reversed: %v\n", ptrAddr)
+				if err != nil {
+					resp.Err = fmt.Errorf("failed to read input as ip address.")
+				} else {
+					lookupDNSforIpAndServer(ctx, ptrAddr, ip, resp)
+					if len(resp.DnsNames) > 0 {
+						for len(dnsServers)-(i+1) > 0 {
+
+							fmt.Printf("ending waitGroup\n")
+							wg.Done()
+						}
 					}
 				}
 			}
@@ -92,11 +105,11 @@ func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, r
 
 	r := getResolver(ctx, dnsServer)
 
-	host, err := r.LookupCNAME(ctx, ip)
+	hosts, err := r.LookupAddr(ctx, ip)
 	if err != nil {
 		resp.Err = err
 	} else {
-		resp.DnsNames = append(resp.DnsNames, host)
+		resp.DnsNames = append(resp.DnsNames, hosts...)
 	}
 
 }
@@ -112,4 +125,25 @@ func getResolver(ctx context.Context, dnsHost string) *net.Resolver {
 		},
 	}
 	return r
+}
+func reverseIPAddress(ip string) (string, error) {
+	var netip = net.ParseIP(ip).To4()
+	if netip != nil {
+		// split into slice by dot .
+		addressSlice := strings.Split(netip.String(), ".")
+		reverseSlice := []string{}
+
+		for i := range addressSlice {
+			octet := addressSlice[len(addressSlice)-1-i]
+			reverseSlice = append(reverseSlice, octet)
+		}
+
+		// sanity check
+		//fmt.Println(reverseSlice)
+
+		return strings.Join(reverseSlice, "."), nil
+
+	} else {
+		return "", fmt.Errorf("invalid ipv4 address")
+	}
 }
