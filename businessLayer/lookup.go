@@ -41,9 +41,10 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 	for _, ip := range resp.InternalIPAddresses {
 		if slices.Contains(resp.ExternalIPAddresses, ip) {
 			index := slices.Index(resp.ExternalIPAddresses, ip)
-			slices.Delete(resp.ExternalIPAddresses, index, index+1)
+			resp.ExternalIPAddresses = slices.Delete(resp.ExternalIPAddresses, index, index+1)
 		}
 	}
+	resp.DnsNames = slices.Compact(resp.DnsNames)
 
 	return resp, nil
 }
