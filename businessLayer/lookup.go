@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -30,10 +31,20 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 	lookupDNS(ctx, cfg.DNS.ExternalServers, false, isDNS(), req, &resp)
 
 	if len(resp.DnsNames) == 0 && len(resp.ExternalIPAddresses) == 0 && len(resp.InternalIPAddresses) == 0 {
-		err := fmt.Errorf("could not find internal dns record")
+		err := fmt.Errorf("could not find dns record")
 		resp.Err = err
 		return resp, err
+	} else {
+		resp.Err = nil
 	}
+
+	for _, ip := range resp.InternalIPAddresses {
+		if slices.Contains(resp.ExternalIPAddresses, ip) {
+			index := slices.Index(resp.ExternalIPAddresses, ip)
+			slices.Delete(resp.ExternalIPAddresses, index, index+1)
+		}
+	}
+
 	return resp, nil
 }
 
