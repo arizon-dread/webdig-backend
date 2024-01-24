@@ -1,5 +1,5 @@
 package models
 
 type Req struct {
-	Host string `json: body`
+	Host string `json:"host"`
 }

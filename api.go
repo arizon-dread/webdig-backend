@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+	"strings"
 
 	businesslayer "github.com/arizon-dread/webdig-backend/businessLayer"
 	"github.com/arizon-dread/webdig-backend/models"
@@ -16,8 +16,12 @@ func lookup(c *gin.Context) {
 	var status int = http.StatusOK
 	resp, err := businesslayer.Lookup(c.Request.Context(), req)
 	if err != nil {
-		fmt.Printf("Unable to lookup IP, %v", err)
-		status = http.StatusBadRequest
+		if strings.Contains(err.Error(), "could not find dns record") {
+			status = http.StatusNotFound
+		} else {
+			status = http.StatusBadRequest
+		}
+
 	}
 	c.JSON(status, resp)
 

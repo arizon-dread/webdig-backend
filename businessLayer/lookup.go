@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -56,7 +55,6 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 		go func(wg *sync.WaitGroup, i int) {
 			defer wg.Done()
 			if isDNS {
-				fmt.Printf("got dns: %v\n", req.Host)
 				ips := LookupIPforDNSandServer(ctx, req.Host, ip, resp)
 				if len(ips) > 0 {
 					for _, ip := range ips {
@@ -69,12 +67,10 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 				}
 				if isInternal && len(resp.InternalIPAddresses) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
-						fmt.Printf("ending waitGroup\n")
 						wg.Done()
 					}
 				} else if !isInternal && len(resp.ExternalIPAddresses) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
-						fmt.Printf("ending waitGroup\n")
 						wg.Done()
 					}
 				}
@@ -82,7 +78,6 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
 				if len(resp.DnsNames) > 0 {
 					for len(dnsServers)-(i+1) > 0 {
-						fmt.Printf("ending waitGroup\n")
 						wg.Done()
 					}
 				}
@@ -129,25 +124,4 @@ func getResolver(ctx context.Context, dnsHost string) *net.Resolver {
 		},
 	}
 	return r
-}
-func reverseIPAddress(ip string) (string, error) {
-	var netip = net.ParseIP(ip).To4()
-	if netip != nil {
-		// split into slice by dot .
-		addressSlice := strings.Split(netip.String(), ".")
-		reverseSlice := []string{}
-
-		for i := range addressSlice {
-			octet := addressSlice[len(addressSlice)-1-i]
-			reverseSlice = append(reverseSlice, octet)
-		}
-
-		// sanity check
-		//fmt.Println(reverseSlice)
-
-		return strings.Join(reverseSlice, "."), nil
-
-	} else {
-		return "", fmt.Errorf("invalid ipv4 address")
-	}
 }
