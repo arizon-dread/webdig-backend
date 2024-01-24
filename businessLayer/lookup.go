@@ -54,6 +54,7 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 	wg.Add(len(dnsServers))
 	for i, ip := range dnsServers {
 		go func(wg *sync.WaitGroup, i int) {
+			defer wg.Done()
 			if isDNS {
 				fmt.Printf("got dns: %v\n", req.Host)
 				ips := LookupIPforDNSandServer(ctx, req.Host, ip, resp)
@@ -86,7 +87,6 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 					}
 				}
 			}
-			wg.Done()
 		}(&wg, i)
 
 	}
