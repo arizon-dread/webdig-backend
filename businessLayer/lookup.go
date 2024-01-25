@@ -50,24 +50,29 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 
 func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS bool, req models.Req, resp *models.Resp) {
 	var wg sync.WaitGroup
-	wg.Add(len(dnsServers))
 	for i, ip := range dnsServers {
+		wg.Add(1)
 		go func(wg *sync.WaitGroup, i int) {
 			defer wg.Done()
 			if isDNS {
-				ips := LookupIPforDNSandServer(ctx, req.Host, ip, resp)
+				ips := lookupIPforDNSandServer(ctx, req.Host, ip, resp)
 				if len(ips) > 0 {
 					for _, ip := range ips {
 						if isInternal {
-							resp.InternalIPAddresses = append(resp.InternalIPAddresses, ip.String())
+							if !slices.Contains(resp.InternalIPAddresses, ip.String()) {
+								resp.InternalIPAddresses = append(resp.InternalIPAddresses, ip.String())
+							}
+
 						} else {
-							resp.ExternalIPAddresses = append(resp.ExternalIPAddresses, ip.String())
+							if !slices.Contains(resp.ExternalIPAddresses, ip.String()) {
+								resp.ExternalIPAddresses = append(resp.ExternalIPAddresses, ip.String())
+							}
 						}
 					}
 				}
 			} else {
 				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
-				
+
 			}
 		}(&wg, i)
 
@@ -75,7 +80,7 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 	wg.Wait()
 }
 
-func LookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, resp *models.Resp) []net.IP {
+func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, resp *models.Resp) []net.IP {
 
 	r := getResolver(ctx, dnsServer)
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
