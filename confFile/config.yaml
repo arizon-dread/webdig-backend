@@ -5,5 +5,5 @@ general:
     methods: ['GET', 'POST']
     headers: ['Origin', 'Content-Type']
 dns:
-  internalServers: ['8.8.4.4'] #ipv6 addresses must be enclosed in brackets []
+  internalServers: ['10.10.55.10'] #ipv6 addresses must be enclosed in brackets []
   externalServers: ['8.8.8.8']
