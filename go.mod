@@ -1,6 +1,6 @@
 module github.com/arizon-dread/webdig-backend
 
-go 1.21.4
+go 1.21.6
 
 require (
 	github.com/gin-contrib/cors v1.5.0
