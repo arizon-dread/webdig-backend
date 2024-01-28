@@ -82,7 +82,8 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 
 func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, resp *models.Resp) []net.IP {
 
-	r := getResolver(ctx, dnsServer)
+	r, cancel := getResolver(ctx, dnsServer)
+	defer cancel()
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
 		resp.Err = err
@@ -94,7 +95,8 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 
 func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, resp *models.Resp) {
 
-	r := getResolver(ctx, dnsServer)
+	r, cancel := getResolver(ctx, dnsServer)
+	defer cancel()
 
 	hosts, err := r.LookupAddr(ctx, ip)
 	if err != nil {
@@ -105,15 +107,16 @@ func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, r
 
 }
 
-func getResolver(ctx context.Context, dnsHost string) *net.Resolver {
+func getResolver(ctx context.Context, dnsHost string) (*net.Resolver, context.CancelFunc) {
+	ctxTo, cancel := context.WithTimeout(ctx, time.Duration(time.Millisecond*5000))
 	r := &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			d := net.Dialer{
 				Timeout: time.Duration(time.Millisecond * 5000),
 			}
-			return d.DialContext(ctx, network, dnsHost+":53")
+			return d.DialContext(ctxTo, network, dnsHost+":53")
 		},
 	}
-	return r
+	return r, cancel
 }
