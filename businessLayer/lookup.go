@@ -43,6 +43,8 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 			resp.ExternalIPAddresses = slices.Delete(resp.ExternalIPAddresses, index, index+1)
 		}
 	}
+	slices.Sort(resp.DnsNames)
+
 	resp.DnsNames = slices.Compact(resp.DnsNames)
 
 	return resp, nil
