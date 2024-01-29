@@ -52,7 +52,7 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 	var wg sync.WaitGroup
 	for i, ip := range dnsServers {
 		wg.Add(1)
-		go func(wg *sync.WaitGroup, i int) {
+		go func(wg *sync.WaitGroup, i int, ip string) {
 			defer wg.Done()
 			if isDNS {
 				ips := lookupIPforDNSandServer(ctx, req.Host, ip, resp)
@@ -74,7 +74,7 @@ func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS 
 				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
 
 			}
-		}(&wg, i)
+		}(&wg, i, ip)
 
 	}
 	wg.Wait()
@@ -87,6 +87,9 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
 		resp.Err = err
+		if len(ips) > 0 {
+			return ips
+		}
 		return nil
 	} else {
 		return ips
