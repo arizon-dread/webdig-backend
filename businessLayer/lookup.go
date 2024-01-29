@@ -99,7 +99,8 @@ func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, r
 	hosts, err := r.LookupAddr(ctx, ip)
 	if err != nil {
 		resp.Err = err
-	} else {
+	}
+	if len(hosts) > 0 {
 		resp.DnsNames = append(resp.DnsNames, hosts...)
 	}
 
