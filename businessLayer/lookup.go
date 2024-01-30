@@ -37,10 +37,10 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 		resp.Err = nil
 	}
 
-	for _, ip := range resp.InternalIPAddresses {
-		if slices.Contains(resp.ExternalIPAddresses, ip) {
-			index := slices.Index(resp.ExternalIPAddresses, ip)
-			resp.ExternalIPAddresses = slices.Delete(resp.ExternalIPAddresses, index, index+1)
+	for _, ip := range resp.ExternalIPAddresses {
+		if slices.Contains(resp.InternalIPAddresses, ip) {
+			index := slices.Index(resp.InternalIPAddresses, ip)
+			resp.InternalIPAddresses = slices.Delete(resp.InternalIPAddresses, index, index+1)
 		}
 	}
 	slices.Sort(resp.DnsNames)
