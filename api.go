@@ -26,3 +26,6 @@ func lookup(c *gin.Context) {
 	c.JSON(status, resp)
 
 }
+func healthz(c *gin.Context) {
+	c.JSON(http.StatusOK, "Healthy")
+}

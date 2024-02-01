@@ -16,6 +16,7 @@ func main() {
 	readConfig()
 	cfg := config.GetInstance()
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.General.Cors.Origins,
 		AllowHeaders: cfg.General.Cors.Headers,
@@ -25,6 +26,7 @@ func main() {
 		},
 	}))
 	router.POST("/api/dig", lookup)
+	router.GET("/healthz", healthz)
 	router.Run(":8080")
 }
 
