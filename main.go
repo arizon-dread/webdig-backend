@@ -51,6 +51,15 @@ func readConfig() {
 	if err != nil {
 		breakOnNoConfig(err)
 	}
+	atLeastOneUnfiltered := false
+	for _, v := range cfg.DNS {
+		if v.FilterDuplicates == false {
+			atLeastOneUnfiltered = true
+		}
+	}
+	if !atLeastOneUnfiltered {
+		panic("At least one dns entry must be set to FilterDuplicates: false.")
+	}
 }
 
 func breakOnNoConfig(err error) {

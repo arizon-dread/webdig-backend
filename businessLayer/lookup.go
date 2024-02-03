@@ -24,92 +24,151 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 		}
 		return false
 	}
+	for _, serverGroup := range cfg.DNS {
+		lookupDNS(ctx, serverGroup, isDNS(), req, &resp)
+	}
 
-	lookupDNS(ctx, cfg.DNS.InternalServers, true, isDNS(), req, &resp)
-
-	lookupDNS(ctx, cfg.DNS.ExternalServers, false, isDNS(), req, &resp)
-
-	if len(resp.DnsNames) == 0 && len(resp.ExternalIPAddresses) == 0 && len(resp.InternalIPAddresses) == 0 {
+	//Find out if we have a no-hit result and return 404.
+	none := true
+	if isDNS() {
+		for _, result := range resp.Results {
+			if len(result.IPAddresses) > 0 {
+				none = false
+				break
+			}
+		}
+	} else {
+		for _, result := range resp.Results {
+			if len(result.DnsNames) > 0 {
+				none = false
+				break
+			}
+		}
+	}
+	if none {
 		err := fmt.Errorf("could not find dns record")
 		resp.Err = err
 		return resp, err
-	} else {
-		resp.Err = nil
 	}
 
-	for _, ip := range resp.ExternalIPAddresses {
-		if slices.Contains(resp.InternalIPAddresses, ip) {
-			index := slices.Index(resp.InternalIPAddresses, ip)
-			resp.InternalIPAddresses = slices.Delete(resp.InternalIPAddresses, index, index+1)
-		}
-	}
-	slices.Sort(resp.DnsNames)
-
-	resp.DnsNames = slices.Compact(resp.DnsNames)
+	removeDuplicates(isDNS(), &resp)
 
 	return resp, nil
 }
 
-func lookupDNS(ctx context.Context, dnsServers []string, isInternal bool, isDNS bool, req models.Req, resp *models.Resp) {
+func removeDuplicates(isDNS bool, resp *models.Resp) {
+	//remove duplicates if configured
+	cfg := config.GetInstance()
+	type dnsContent struct {
+		addresses []string
+		filter    bool
+	}
+	dns := make(map[string]dnsContent)
+	for _, grp := range cfg.DNS {
+		cnt := dnsContent{addresses: grp.Servers, filter: grp.FilterDuplicates}
+		dns[grp.Name] = cnt
+	}
+	rslt := make(map[string][]string)
+	if isDNS {
+		for _, res := range resp.Results {
+			slices.Sort(res.IPAddresses)
+			res.IPAddresses = slices.Compact(res.IPAddresses)
+			rslt[res.Name] = res.IPAddresses
+		}
+	} else {
+
+		for _, res := range resp.Results {
+			slices.Sort(res.DnsNames)
+			res.DnsNames = slices.Compact(res.DnsNames)
+
+			rslt[res.Name] = res.DnsNames
+		}
+	}
+	for k, v := range dns {
+		if v.filter {
+			rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
+				for _, res := range resp.Results {
+					if res.Name != k {
+						if isDNS {
+							return slices.Contains(res.IPAddresses, e)
+						} else {
+							return slices.Contains(res.DnsNames, e)
+						}
+					}
+				}
+				return false
+			})
+		}
+	}
+	for i, v := range resp.Results {
+		if isDNS {
+			resp.Results[i].IPAddresses = rslt[v.Name]
+		} else {
+			resp.Results[i].DnsNames = rslt[v.Name]
+		}
+	}
+}
+
+func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, req models.Req, resp *models.Resp) {
+	result := models.Result{
+		Name: serverGroup.Name,
+	}
+
 	var wg sync.WaitGroup
-	for i, ip := range dnsServers {
+	for i, ip := range serverGroup.Servers {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, i int, ip string) {
 			defer wg.Done()
 			if isDNS {
-				ips := lookupIPforDNSandServer(ctx, req.Host, ip, resp)
+				ips, err := lookupIPforDNSandServer(ctx, req.Host, ip)
+				if err != nil {
+					result.Err = err
+				}
 				if len(ips) > 0 {
 					for _, ip := range ips {
-						if isInternal {
-							if !slices.Contains(resp.InternalIPAddresses, ip.String()) {
-								resp.InternalIPAddresses = append(resp.InternalIPAddresses, ip.String())
-							}
-
-						} else {
-							if !slices.Contains(resp.ExternalIPAddresses, ip.String()) {
-								resp.ExternalIPAddresses = append(resp.ExternalIPAddresses, ip.String())
-							}
+						if !slices.Contains(result.IPAddresses, ip.String()) {
+							result.IPAddresses = append(result.IPAddresses, ip.String())
 						}
 					}
 				}
 			} else {
-				lookupDNSforIpAndServer(ctx, req.Host, ip, resp)
+				hosts, err := lookupDNSforIpAndServer(ctx, req.Host, ip)
+				if err != nil {
+					result.Err = err
+				}
+				if len(hosts) > 0 {
+					result.DnsNames = append(result.DnsNames, hosts...)
+				}
 
 			}
 		}(&wg, i, ip)
 
 	}
 	wg.Wait()
+	resp.Results = append(resp.Results, result)
 }
 
-func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, resp *models.Resp) []net.IP {
+func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string) ([]net.IP, error) {
 
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
-		resp.Err = err
 		if len(ips) > 0 {
-			return ips
+			return ips, err
 		}
-		return nil
+		return nil, err
 	} else {
-		return ips
+		return ips, nil
 	}
 }
 
-func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string, resp *models.Resp) {
+func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) ([]string, error) {
 
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 
-	hosts, err := r.LookupAddr(ctx, ip)
-	if err != nil {
-		resp.Err = err
-	}
-	if len(hosts) > 0 {
-		resp.DnsNames = append(resp.DnsNames, hosts...)
-	}
+	return r.LookupAddr(ctx, ip)
 
 }
 

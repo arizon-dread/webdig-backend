@@ -18,12 +18,14 @@ func GetInstance() *Config {
 }
 
 type Config struct {
-	DNS     DNS
+	DNS     []ServerGroup
 	General General
 }
-type DNS struct {
-	InternalServers []string
-	ExternalServers []string
+
+type ServerGroup struct {
+	Name             string
+	Servers          []string
+	FilterDuplicates bool
 }
 
 type General struct {

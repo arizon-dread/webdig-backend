@@ -1,8 +1,13 @@
 package models
 
 type Resp struct {
-	DnsNames            []string `json:"dnsNames"`
-	ExternalIPAddresses []string `json:"externalIPAddresses"`
-	InternalIPAddresses []string `json:"internalIPAddresses"`
-	Err                 error    `json:"error"`
+	Results []Result `json:"result"`
+	Err     error    `json:"error"`
+}
+
+type Result struct {
+	Name        string   `json:"name"`
+	DnsNames    []string `json:"dnsNames"`
+	IPAddresses []string `json:"ipAddresses"`
+	Err         error    `json:"error"`
 }
