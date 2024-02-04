@@ -1,7 +1,7 @@
 package models
 
 type Resp struct {
-	Results []Result `json:"result"`
+	Results []Result `json:"results"`
 	Err     error    `json:"error"`
 }
 
