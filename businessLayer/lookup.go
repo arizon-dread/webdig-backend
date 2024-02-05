@@ -61,7 +61,7 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 	cfg := config.GetInstance()
 	type dnsContent struct {
 		addresses []string
-		filter    bool
+		filter    []string
 	}
 	dns := make(map[string]dnsContent)
 	for _, grp := range cfg.DNS {
@@ -85,10 +85,10 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 		}
 	}
 	for k, v := range dns {
-		if v.filter {
+		if len(v.filter) > 0 {
 			rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
 				for _, res := range resp.Results {
-					if res.Name != k {
+					if res.Name != k && slices.Contains(dns[k].filter, res.Name) { //don't check duplicates on the current node k within the current result, then it'd be self comparing, check if the current node has a filter entry with the name of the res
 						if isDNS {
 							return slices.Contains(res.IPAddresses, e)
 						} else {

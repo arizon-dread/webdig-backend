@@ -25,7 +25,7 @@ type Config struct {
 type ServerGroup struct {
 	Name             string
 	Servers          []string
-	FilterDuplicates bool
+	FilterDuplicates []string
 }
 
 type General struct {
