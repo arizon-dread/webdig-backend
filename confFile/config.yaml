@@ -8,7 +8,10 @@ dns:
   - name: "internet"
     servers: ['8.8.4.4', '8.8.8.8'] #ipv6 addresses must be enclosed in brackets []
     #This filters duplicate hits between different dns server group entries:
-    filterDuplicates: false #if multiple dns server groups, at least one must be unfiltered (false). Duplicate hits within one dns group will still will always be filtered.
+    filterDuplicates: [] #if multiple dns server groups, at least one must be unfiltered (false). Duplicate hits within one dns group will still will always be filtered.
   - name: "OpenDNS"
     servers: ['208.67.222.222', '208.67.220.220']
-    filterDuplicates: true #If true, hits in this group that exists in "internet" will be removed from this result section.
+    filterDuplicates: ['internet'] #If true, hits in this group that exists in "internet" will be removed from this result section.
+  - name: "SomeOther"
+    servers: ['1.1.1.1']
+    filterDuplicates: ['OpenDNS']

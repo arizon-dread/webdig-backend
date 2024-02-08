@@ -51,14 +51,16 @@ func readConfig() {
 	if err != nil {
 		breakOnNoConfig(err)
 	}
+	//Perhaps we need to check that they don't circularly reference eachother...
 	atLeastOneUnfiltered := false
 	for _, v := range cfg.DNS {
-		if v.FilterDuplicates == false {
+		if len(v.FilterDuplicates) == 0 {
 			atLeastOneUnfiltered = true
 		}
 	}
 	if !atLeastOneUnfiltered {
-		panic("At least one dns entry must be set to FilterDuplicates: false.")
+		fmt.Println("[WARNING] You have set filterDuplicates on all server groups. If you create a circular filter for all groups, you will get an empty response every time.")
+		panic("Example circular filter that would yield an empty result on every request: A -> B -> C -> A. ")
 	}
 }
 
