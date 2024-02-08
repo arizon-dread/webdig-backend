@@ -85,18 +85,10 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 		}
 	}
 	for k, v := range dns {
-<<<<<<< HEAD
-		if v.filter {
-			for _, res := range resp.Results {
-				rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
-
-					if res.Name != k {
-=======
 		if len(v.filter) > 0 {
 			rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
 				for _, res := range resp.Results {
 					if res.Name != k && slices.Contains(dns[k].filter, res.Name) { //don't check duplicates on the current node k within the current result, then it'd be self comparing, check if the current node has a filter entry with the name of the res
->>>>>>> 80b355b8bd827a1b74e29963c771fec0054cf837
 						if isDNS {
 							return slices.Contains(res.IPAddresses, e)
 						} else {
