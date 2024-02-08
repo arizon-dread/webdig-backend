@@ -18,15 +18,15 @@ dns:
   - name: "internet"
     servers: ['8.8.4.4', '8.8.8.8'] #ipv6 addresses must be enclosed in brackets []
     #This filters duplicate hits between different dns server group entries:
-    filterDuplicates: false #if multiple dns server groups, at least one must be unfiltered (false). Duplicate hits within one dns group will still will always be filtered.
+    filterDuplicates: [] #if multiple dns server groups, at least one must be unfiltered ([]). Duplicate hits within one dns group will still will always be filtered.
   - name: "OpenDNS"
     servers: ['208.67.222.222', '208.67.220.220']
-    filterDuplicates: true #If true, hits in this group that exists in "internet" will be removed from this result section.
+    filterDuplicates: ['internet'] #If set, hits in this group that exists in "internet" will be removed from this result section.
 ```
 ### filterDuplicates
-The filterDuplicates setting is used if you specify several groups of dns servers and i.e. your internal dns servers mirror internet dns, but you want to display external addresses only in the 'internet' response. Then you would want to set `filterDuplicates: true` on your internal dns server group. The config here is just a public example. The point of using multiple dns server groups is to do dns lookups for different networks and avoid displaying mirrored hits in one or more groups.
+The filterDuplicates setting is used if you specify several groups of dns servers and i.e. your internal dns servers mirror internet dns, but you want to display external addresses only in the 'internet' response. Then you would want to set `filterDuplicates: ['internet']` on your internal dns server group. The config here is just a public example. The point of using multiple dns server groups is to do dns lookups for different networks and avoid displaying mirrored hits in one or more groups.
 
-Note that at least one dns server group must have `filterDuplicates: false`.  
+Note that at least one dns server group must have `filterDuplicates: []` since a circular filter config would always return an empty response and thus yield the application useless. This app will panic if you set all groups to filter some other group.  
 
 Duplicate dns records or ip addresses within one servergroup will always be sorted and filtered, no matter this setting. If in this example above, `8.8.4.4` and `8.8.8.8` both reply with the same result for a lookup request, the response will only contain one entry of that hit for that dns server group. 
 
@@ -70,7 +70,7 @@ The above config is used for these samples.
 }
 ```
 ## response 2
-Note that `filterDuplicates: true` on OpenDNS filters all the hits here. If it would've been set to `false` the `dnsNames` arrays would've contained the same content. 
+Note that `filterDuplicates: ['internet']` on OpenDNS filters all the hits here. If it would've been set to `[]` the `dnsNames` arrays would've contained the same content in both result entries.  
 ```json
 {
    "error" : null,
