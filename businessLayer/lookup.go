@@ -95,10 +95,9 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 							return slices.Contains(res.DnsNames, e)
 						}
 					}
-					return false
-				})
-
-			}
+				}
+				return false
+			})
 		}
 	}
 	for i, v := range resp.Results {
