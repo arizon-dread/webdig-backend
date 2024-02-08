@@ -86,8 +86,9 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 	}
 	for k, v := range dns {
 		if v.filter {
-			rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
-				for _, res := range resp.Results {
+			for _, res := range resp.Results {
+				rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
+
 					if res.Name != k {
 						if isDNS {
 							return slices.Contains(res.IPAddresses, e)
@@ -95,9 +96,10 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 							return slices.Contains(res.DnsNames, e)
 						}
 					}
-				}
-				return false
-			})
+					return false
+				})
+
+			}
 		}
 	}
 	for i, v := range resp.Results {
