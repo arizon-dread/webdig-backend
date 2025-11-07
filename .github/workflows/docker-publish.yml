@@ -36,9 +36,9 @@ jobs:
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.0.2 #v3.1.1
-        with:
-          cosign-release: 'v3.0.2'
+        uses: sigstore/cosign-installer@v4.0.0 #v3.1.1
+       # with:
+       #   cosign-release: 'v3.0.2'
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
