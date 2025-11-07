@@ -6,13 +6,15 @@ COPY . .
 
 RUN apk update && apk add --no-cache git
 RUN go build -v -o /usr/local/bin/webdig-backend/ ./...
+#COPY entrypoint.sh /usr/local/bin/webdig-backend/ 
+#RUN chmod +x /usr/local/bin/webdig-backend/entrypoint.sh
 
 
 FROM docker.io/golang:1.25-alpine AS final
 WORKDIR /go/bin
-ENV GIN_MODE=release
+ARG VERSION
+ENV GENERAL_VERSION=${VERSION}
 #RUN apk add --no-cache libc6-compat musl-dev
 COPY --from=build /usr/local/bin/webdig-backend/ /go/bin/
 EXPOSE 8080
-
 ENTRYPOINT [ "./webdig-api" ]
