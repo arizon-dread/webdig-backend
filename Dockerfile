@@ -6,8 +6,6 @@ COPY . .
 
 RUN apk update && apk add --no-cache git
 RUN go build -v -o /usr/local/bin/webdig-backend/ ./...
-#COPY entrypoint.sh /usr/local/bin/webdig-backend/ 
-#RUN chmod +x /usr/local/bin/webdig-backend/entrypoint.sh
 
 
 FROM docker.io/golang:1.25-alpine AS final
