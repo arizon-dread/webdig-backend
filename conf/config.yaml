@@ -4,6 +4,7 @@ general:
     origins: ['http://localhost:4200']
     methods: ['GET', 'POST']
     headers: ['Origin', 'Content-Type']
+  version: "v2.2.0"
 dns:
   - name: "internet"
     servers: ['8.8.4.4', '8.8.8.8'] #ipv6 addresses must be enclosed in brackets []
