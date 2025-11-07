@@ -1,4 +1,4 @@
-package models
+package types
 
 type Resp struct {
 	Results []Result `json:"results"`

@@ -29,7 +29,8 @@ type ServerGroup struct {
 }
 
 type General struct {
-	Cors Cors
+	Cors    Cors
+	Version string
 }
 
 type Cors struct {

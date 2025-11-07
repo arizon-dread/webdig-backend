@@ -1,4 +1,4 @@
-package businesslayer
+package internal
 
 import (
 	"context"
@@ -10,11 +10,13 @@ import (
 	"unicode"
 
 	"github.com/arizon-dread/webdig-backend/config"
-	"github.com/arizon-dread/webdig-backend/models"
+	"github.com/arizon-dread/webdig-backend/pkg/types"
 )
 
-func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
-	var resp models.Resp
+// Evaluate if req.Host is an IP address or a DNS record, lookup the matching type by calling the implementation
+// specific to that type of request.
+func Lookup(ctx context.Context, req types.Req) (types.Resp, error) {
+	var resp types.Resp
 	cfg := config.GetInstance()
 	isDNS := func() bool {
 		for _, r := range req.Host {
@@ -56,7 +58,7 @@ func Lookup(ctx context.Context, req models.Req) (models.Resp, error) {
 	return resp, nil
 }
 
-func removeDuplicates(isDNS bool, resp *models.Resp) {
+func removeDuplicates(isDNS bool, resp *types.Resp) {
 	//remove duplicates if configured
 	cfg := config.GetInstance()
 	type dnsContent struct {
@@ -109,11 +111,10 @@ func removeDuplicates(isDNS bool, resp *models.Resp) {
 	}
 }
 
-func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, req models.Req, resp *models.Resp) {
-	result := models.Result{
+func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, req types.Req, resp *types.Resp) {
+	result := types.Result{
 		Name: serverGroup.Name,
 	}
-
 	var wg sync.WaitGroup
 	for i, ip := range serverGroup.Servers {
 		wg.Add(1)
@@ -149,7 +150,6 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 }
 
 func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string) ([]net.IP, error) {
-
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
@@ -158,9 +158,8 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 			return ips, err
 		}
 		return nil, err
-	} else {
-		return ips, nil
 	}
+	return ips, nil
 }
 
 func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) ([]string, error) {
@@ -172,6 +171,7 @@ func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) (
 
 }
 
+// Gets a net.Dialer inside a net.Resolver to perform dns lookup
 func getResolver(ctx context.Context, dnsHost string) (*net.Resolver, context.CancelFunc) {
 	ctxTo, cancel := context.WithTimeout(ctx, time.Duration(time.Millisecond*5000))
 	r := &net.Resolver{
