@@ -13,6 +13,8 @@ import (
 	"github.com/arizon-dread/webdig-backend/pkg/types"
 )
 
+// Evaluate if req.Host is an IP address or a DNS record, lookup the matching type by calling the implementation
+// specific to that type of request.
 func Lookup(ctx context.Context, req types.Req) (types.Resp, error) {
 	var resp types.Resp
 	cfg := config.GetInstance()
@@ -113,7 +115,6 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 	result := types.Result{
 		Name: serverGroup.Name,
 	}
-
 	var wg sync.WaitGroup
 	for i, ip := range serverGroup.Servers {
 		wg.Add(1)
@@ -149,7 +150,6 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 }
 
 func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string) ([]net.IP, error) {
-
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
@@ -158,9 +158,8 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 			return ips, err
 		}
 		return nil, err
-	} else {
-		return ips, nil
 	}
+	return ips, nil
 }
 
 func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) ([]string, error) {
@@ -172,6 +171,7 @@ func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) (
 
 }
 
+// Gets a net.Dialer inside a net.Resolver to perform dns lookup
 func getResolver(ctx context.Context, dnsHost string) (*net.Resolver, context.CancelFunc) {
 	ctxTo, cancel := context.WithTimeout(ctx, time.Duration(time.Millisecond*5000))
 	r := &net.Resolver{

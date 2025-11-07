@@ -25,6 +25,7 @@ func main() {
 	})
 
 	mux.HandleFunc("POST /api/dig", api.Lookup)
+	mux.HandleFunc("GET /api/version", api.Version)
 	mux.HandleFunc("GET /healthz", api.Healthz)
 	handler := c.Handler(mux)
 
@@ -36,6 +37,7 @@ func main() {
 		Handler:   handler,
 		Protocols: &protos,
 	}
+	log.Println("Starting webdig backend")
 	log.Fatal(httpServer.ListenAndServe())
 }
 
@@ -43,7 +45,7 @@ func readConfig() {
 
 	cfg := config.GetInstance()
 	//We use a dedicated folder for the config file to ease the configMap volume mount.
-	viper.SetConfigFile("./confFile/config.yaml")
+	viper.SetConfigFile("./conf/config.yaml")
 	viper.SetConfigType("yaml")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
