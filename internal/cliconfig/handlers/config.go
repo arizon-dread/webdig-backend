@@ -1,30 +1,44 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/arizon-dread/webdig-backend/internal/cliconfig"
 	"github.com/arizon-dread/webdig-backend/internal/cliconfig/platform"
 )
 
-var pathFinder cliconfig.Pathfinder = platform.NewFindPath()
+var pathFinder platform.Pathfinder = platform.NewFindPath()
 
-func ensureAppDir() error {
-	err := os.MkdirAll(filepath.Join(pathFinder.FindPath(), "webdig"), os.FileMode(0755))
+var (
+	ErrMakingDirectory = errors.New("unable to make configDir")
+	ErrOpenFIle        = errors.New("uanble to open file")
+)
+
+func ensureAppDir() (string, error) {
+	dir := filepath.Join(pathFinder.FindPath(), "webdig")
+	err := os.MkdirAll(dir, os.FileMode(0o755))
 	if err != nil {
-		log.Printf("Error making directory at config path: %v, error: %v", pathFinder.FindPath(), err)
-		return err
+		return "", fmt.Errorf("%w: %w", &ErrMakingDirectory, err)
 	}
-	return nil
+	return dir, nil
 }
 
 func EnsureConfig() error {
-	err := ensureAppDir()
+	dir, err := ensureAppDir()
 	if err != nil {
 		log.Printf("error ensuring directory, %v", err)
+		return err
 	}
-	//try to find config.yaml and marshal into go struct, otherwise return err and let user specify server
+	file := fmt.Sprintf("%v%vserver.conf", dir, os.PathSeparator)
+	f, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// file exists!
+	// try to find config.yaml and marshal into go struct, otherwise return err and let user specify server
 	return nil
 }
