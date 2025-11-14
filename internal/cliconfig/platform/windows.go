@@ -5,8 +5,6 @@ package platform
 
 import (
 	"os"
-
-	"github.com/arizon-dread/webdig-backend/internal/cliconfig"
 )
 
 type windowsFindPath struct{}
@@ -15,6 +13,6 @@ func (w *windowsFindPath) FindPath() string {
 	return os.Getenv("APPDATA")
 }
 
-func NewFindPath() cliconfig.Pathfinder {
+func NewFindPath() Pathfinder {
 	return &windowsFindPath{}
 }

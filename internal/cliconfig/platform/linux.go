@@ -6,8 +6,6 @@ package platform
 import (
 	"os"
 	"path/filepath"
-
-	"github.com/arizon-dread/webdig-backend/internal/cliconfig"
 )
 
 type linuxFindPath struct{}
@@ -24,6 +22,6 @@ func (l *linuxFindPath) FindPath() string {
 	// os level
 }
 
-func NewFindPath() cliconfig.Pathfinder {
+func NewFindPath() Pathfinder {
 	return &linuxFindPath{}
 }
