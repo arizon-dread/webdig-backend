@@ -42,11 +42,12 @@ func main() {
 				os.Exit(2)
 			}
 		}
-	}
-	conf, err = handlers.EnsureConfig(nil)
-	if err != nil {
-		fmt.Printf("%v", errors.Unwrap(err))
-		os.Exit(3)
+	} else {
+		conf, err = handlers.EnsureConfig(nil)
+		if err != nil {
+			fmt.Printf("%v", errors.Unwrap(err))
+			os.Exit(3)
+		}
 	}
 
 	req := types.Req{
