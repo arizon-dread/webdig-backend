@@ -27,9 +27,13 @@ func main() {
 		fmt.Println("supply a single IP or DNS FQDN to perform a lookup")
 		os.Exit(1)
 	}
+ var conf *types.ServerConf
 	// if a server address is supplied, make the request to that server.
 	if s != "" {
 		// call webdig with specified address
+		conf := types.ServerConf{
+				Server: s,
+		}
 		if c {
 			// try to create the config file
 			err := handlers.SaveConf(s)
@@ -39,7 +43,7 @@ func main() {
 			}
 		}
 	}
-	conf, err := handlers.EnsureConfig(nil)
+	conf, err = handlers.EnsureConfig(nil)
 	if err != nil {
 		fmt.Printf("%v", errors.Unwrap(err))
 		os.Exit(3)
