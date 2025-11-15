@@ -1,5 +1,5 @@
 package types
 
 type ServerConf struct {
-	Server string
+	Server string `yaml:"server"`
 }
