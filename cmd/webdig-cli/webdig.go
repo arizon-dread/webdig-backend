@@ -31,7 +31,7 @@ func main() {
 	// if a server address is supplied, make the request to that server.
 	if s != "" {
 		// call webdig with specified address
-		conf := types.ServerConf{
+		conf := &types.ServerConf{
 				Server: s,
 		}
 		if c {
