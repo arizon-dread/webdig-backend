@@ -76,22 +76,20 @@ func EnsureConfig(dir *string) (*types.ServerConf, error) {
 func SaveConf(url string) error {
 	ErrSaveConf := errors.New("error saving config")
 	dir, err := ensureAppDir()
-	var conf *types.ServerConf
 	if err != nil {
 		return err
 	}
 	if f == nil {
-		conf, err = EnsureConfig(&dir)
+		f, err = os.Create(filepath.Join(dir, "server.yaml"))
 		if err != nil {
-			f, err = os.Create(filepath.Join())
-			if err != nil {
-				return fmt.Errorf("%w: %w", ErrWriteFile, err)
-			}
-			*conf = types.ServerConf{}
-			defer f.Close()
+			return fmt.Errorf("%w: %w", ErrWriteFile, err)
 		}
+		defer f.Close()
 	}
-	conf.Server = url
+
+	conf := &types.ServerConf{
+		Server: url,
+	}
 
 	c, err := yaml.Marshal(conf)
 	if err != nil {
