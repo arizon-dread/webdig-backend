@@ -48,19 +48,12 @@ func EnsureConfig(dir *string) (*types.ServerConf, error) {
 			return nil, err
 		}
 	}
-
 	// create a file reference
-	file := fmt.Sprintf("%v%vserver.yaml", dir, os.PathSeparator)
+	file := fmt.Sprintf("%v%sserver.yaml", *dir, string(os.PathSeparator))
 
 	// open the file for reading
-	f, err = os.Open(file)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrOpenFIle, err)
-	}
-	defer f.Close()
 	// file exists!
-	var b []byte
-	_, err = f.Read(b)
+	b, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrReadFile, err)
 	}
