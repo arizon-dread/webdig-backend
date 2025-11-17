@@ -23,6 +23,7 @@ var (
 	ErrReadFile        = errors.New("unable to read file")
 	ErrUnmarshal       = errors.New("unable to unmarshal file into go struct")
 	ErrWriteFile       = errors.New("unable to write to config file")
+	ErrSaveConf        = errors.New("error saving config")
 )
 
 func ensureAppDir() (string, error) {
@@ -35,6 +36,7 @@ func ensureAppDir() (string, error) {
 }
 
 func EnsureConfig(dir *string) (*types.ServerConf, error) {
+	// try to find server.yaml and marshal into go struct, otherwise return err and let user specify server
 	// make dir path if it doesn't exist
 	var err error
 	if dir == nil {
@@ -69,12 +71,10 @@ func EnsureConfig(dir *string) (*types.ServerConf, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrUnmarshal, err)
 	}
-	// try to find server.yaml and marshal into go struct, otherwise return err and let user specify server
 	return &conf, nil
 }
 
 func SaveConf(url string) error {
-	ErrSaveConf := errors.New("error saving config")
 	dir, err := ensureAppDir()
 	if err != nil {
 		return err
