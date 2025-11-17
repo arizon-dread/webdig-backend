@@ -50,11 +50,11 @@ func main() {
 		}
 	} else {
 		savedConf, err := handlers.EnsureConfig(nil)
-		conf.Server = savedConf.Server
 		if err != nil {
-			fmt.Printf("%v", errors.Unwrap(err))
+			fmt.Printf("couldn't find configured service, use -c -s full-url-to-server to configure, %v", errors.Unwrap(err))
 			os.Exit(3)
 		}
+		conf.Server = savedConf.Server
 	}
 	req := types.Req{
 		Host: addr,
