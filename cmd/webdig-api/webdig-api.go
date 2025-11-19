@@ -24,7 +24,7 @@ func main() {
 		AllowedHeaders: cfg.General.Cors.Headers,
 	})
 
-	mux.HandleFunc("POST /api/dig", api.Lookup)
+	go mux.HandleFunc("POST /api/dig", api.Lookup)
 	mux.HandleFunc("GET /api/version", api.Version)
 	mux.HandleFunc("GET /healthz", api.Healthz)
 	handler := c.Handler(mux)
