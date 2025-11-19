@@ -79,6 +79,9 @@ func main() {
 			ipAddrs := strings.Join(r.IPAddresses, ", ")
 			respText += fmt.Sprintf("IP: %v", ipAddrs)
 		}
+		if len(r.Cname) > 0 {
+			respText += fmt.Sprintf("\nCNAME for %v", r.Cname)
+		}
 		respText += "\n-----\n"
 	}
 	fmt.Printf("%v", respText)
