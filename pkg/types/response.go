@@ -6,8 +6,10 @@ type Resp struct {
 }
 
 type Result struct {
-	Name        string   `json:"name"`
-	DnsNames    []string `json:"dnsNames"`
-	IPAddresses []string `json:"ipAddresses"`
-	Err         error    `json:"error"`
+	Name        string      `json:"name"`
+	DnsNames    []string    `json:"dnsNames"`
+	IPAddresses []string    `json:"ipAddresses"`
+	Cname       string      `json:"cname for"`
+	Type        string      `json:"type"`
+	Err         interface{} `json:"error"`
 }
