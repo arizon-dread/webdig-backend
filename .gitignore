@@ -4,3 +4,4 @@ webdig-api
 !cmd/webdig-api
 cmd/webdig-api/conf
 webdig
+wdig
