@@ -27,6 +27,10 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var req types.Req
 	json.Unmarshal(b, &req)
+	f := false
+	if req.CNAME == nil {
+		req.CNAME = &f
+	}
 
 	var status int = http.StatusOK
 	resp, err := dns.Lookup(r.Context(), req)

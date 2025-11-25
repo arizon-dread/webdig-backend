@@ -121,7 +121,7 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 		go func(wg *sync.WaitGroup, i int, ip string) {
 			defer wg.Done()
 			if isDNS {
-				ips, cname, err := lookupIPforDNSandServer(ctx, req.Host, ip)
+				ips, cname, err := lookupIPforDNSandServer(ctx, req.Host, ip, *req.CNAME)
 				if err != nil {
 					// error-type checking
 					//log.Printf("%v", formatDNSError(err))
@@ -153,17 +153,16 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 	resp.Results = append(resp.Results, result)
 }
 
-func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string) ([]net.IP, string, error) {
+func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, lookupCNAME bool) ([]net.IP, string, error) {
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 	cname := ""
-	arecord, err := resolveCNAME(ctx, dnsName, dnsServer)
-	if err != nil {
-		fmt.Printf("error resolving CNAME: %v\n", err)
-	}
+	if lookupCNAME {
+		arecord, _ := resolveCNAME(ctx, dnsName, dnsServer)
 
-	if cEQa(dnsName, arecord) {
-		cname = arecord
+		if cname == "" && !cEQa(dnsName, arecord) {
+			cname = arecord
+		}
 	}
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
@@ -177,10 +176,7 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 func cEQa(c string, a string) bool {
 	a = ensureDotSuffix(a)
 	c = ensureDotSuffix(c)
-	if a == c {
-		return true
-	}
-	return false
+	return c == a
 }
 func ensureDotSuffix(s string) string {
 	if !strings.HasSuffix(s, ".") {
