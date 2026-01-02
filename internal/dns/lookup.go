@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"slices"
 	"strings"
@@ -124,7 +125,7 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 				ips, cname, err := lookupIPforDNSandServer(ctx, req.Host, ip, *req.CNAME)
 				if err != nil {
 					// error-type checking
-					//log.Printf("%v", formatDNSError(err))
+					// log.Printf("%v", formatDNSError(err))
 
 					result.Err = err // fmt.Errorf("%v", err.Error())
 				}
@@ -158,8 +159,10 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 	defer cancel()
 	cname := ""
 	if lookupCNAME {
-		arecord, _ := resolveCNAME(ctx, dnsName, dnsServer)
-
+		arecord, err := resolveCNAME(ctx, dnsName, dnsServer)
+		if err != nil {
+			log.Printf("got error when looking up CNAME, %v", err)
+		}
 		if cname == "" && !cEQa(dnsName, arecord) {
 			cname = arecord
 		}
@@ -173,17 +176,20 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 	}
 	return ips, cname, nil
 }
+
 func cEQa(c string, a string) bool {
 	a = ensureDotSuffix(a)
 	c = ensureDotSuffix(c)
 	return c == a
 }
+
 func ensureDotSuffix(s string) string {
 	if !strings.HasSuffix(s, ".") {
 		return fmt.Sprintf("%v.", s)
 	}
 	return s
 }
+
 func resolveCNAME(ctx context.Context, c string, dnsServer string) (string, error) {
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
