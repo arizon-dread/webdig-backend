@@ -13,8 +13,10 @@ import (
 func main() {
 	var s string
 	var c bool
+	var n bool
 	flag.StringVar(&s, "s", "", "server url to webdig server for this call")
 	flag.BoolVar(&c, "c", false, "configure the --server setting in your local config for subsequent usage")
+	flag.BoolVar(&n, "n", false, "lookup CNAME. using this flag makes the command slower but also looks up the CNAME and which A-record it points to.")
 	flag.Parse()
 	// get all remaining arguments
 	args := flag.Args()
@@ -55,9 +57,9 @@ func main() {
 		}
 		conf.Server = savedConf.Server
 	}
-
 	req := types.Req{
-		Host: addr,
+		Host:  addr,
+		CNAME: &n,
 	}
 	resp, err := handlers.MakeCall(req, conf)
 	if err != nil {
