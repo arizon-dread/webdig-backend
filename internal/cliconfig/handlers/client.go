@@ -27,7 +27,7 @@ func MakeCall(req types.Req, conf *types.ServerConf) (*types.Resp, error) {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server returned statuscode: %d", res.StatusCode)
+		return nil, fmt.Errorf("server returned status code: %d", res.StatusCode)
 	}
 	resp := &types.Resp{}
 	b, err := io.ReadAll(res.Body)
