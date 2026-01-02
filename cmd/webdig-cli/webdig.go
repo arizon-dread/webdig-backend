@@ -21,7 +21,7 @@ func main() {
 	var addr string
 	// make sure that a lookup parameter is supplied
 	if len(args) > 1 {
-		fmt.Printf("You must supply the lookup address as the last parameter")
+		fmt.Printf("You must supply the lookup address as the last parameter\n")
 		os.Exit(1)
 	}
 	for _, a := range args {
@@ -43,14 +43,14 @@ func main() {
 			// try to create the config file
 			err := handlers.SaveConf(s)
 			if err != nil {
-				fmt.Printf("%v", err)
+				fmt.Printf("%v\n", err)
 				os.Exit(2)
 			}
 		}
 	} else {
 		savedConf, err := handlers.EnsureConfig(nil)
 		if err != nil {
-			fmt.Printf("couldn't find configured service, use -c -s full-url-to-server to configure, %v", err)
+			fmt.Printf("couldn't find configured service, use -c -s full-url-to-server to configure, %v\n", err)
 			os.Exit(3)
 		}
 		conf.Server = savedConf.Server
@@ -61,7 +61,7 @@ func main() {
 	}
 	resp, err := handlers.MakeCall(req, conf)
 	if err != nil {
-		fmt.Printf("%v", err)
+		fmt.Printf("%v\n", err)
 		os.Exit(4)
 	}
 	var respText string
@@ -84,6 +84,6 @@ func main() {
 		}
 		respText += "\n-----\n"
 	}
-	fmt.Printf("%v", respText)
+	fmt.Printf("\n%v", respText)
 	os.Exit(0)
 }
