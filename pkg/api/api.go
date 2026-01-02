@@ -26,7 +26,11 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	var req types.Req
-	json.Unmarshal(b, &req)
+	err = json.Unmarshal(b, &req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Could not unmarshal request into go struct."))
+	}
 	f := false
 	if req.CNAME == nil {
 		req.CNAME = &f
