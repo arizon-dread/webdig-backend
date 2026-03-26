@@ -3,7 +3,6 @@ package dns
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"slices"
 	"strings"
@@ -160,10 +159,8 @@ func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer stri
 	cname := ""
 	if lookupCNAME {
 		arecord, err := resolveCNAME(ctx, dnsName, dnsServer)
-		if err != nil {
-			log.Printf("got error when looking up CNAME, %v", err)
-		}
-		if cname == "" && !cEQa(dnsName, arecord) {
+
+		if err == nil && cname == "" && !cEQa(dnsName, arecord) {
 			cname = arecord
 		}
 	}
