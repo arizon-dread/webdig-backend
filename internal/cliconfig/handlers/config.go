@@ -1,0 +1,96 @@
+package handlers
+
+import (
+	"errors"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/arizon-dread/webdig-backend/internal/cliconfig/platform"
+	"github.com/arizon-dread/webdig-backend/pkg/types"
+	"gopkg.in/yaml.v3"
+)
+
+var (
+	pathFinder platform.Pathfinder = platform.NewFindPath()
+	f          *os.File
+)
+
+var (
+	ErrMakingDirectory = errors.New("unable to make configDir")
+	ErrOpenFile        = errors.New("uanble to open file")
+	ErrReadFile        = errors.New("unable to read file")
+	ErrUnmarshal       = errors.New("unable to unmarshal file into go struct")
+	ErrWriteFile       = errors.New("unable to write to config file")
+	ErrSaveConf        = errors.New("error saving config")
+)
+
+func ensureAppDir() (string, error) {
+	dir := filepath.Join(pathFinder.FindPath(), "webdig")
+	err := os.MkdirAll(dir, os.FileMode(0o755))
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrMakingDirectory, err)
+	}
+	return dir, nil
+}
+
+func EnsureConfig(dir *string) (*types.ServerConf, error) {
+	// try to find server.yaml and marshal into go struct, otherwise return err and let user specify server
+	// make dir path if it doesn't exist
+	var err error
+	if dir == nil {
+		// initialize the string pointer to a string
+		dir = new(string)
+		*dir, err = ensureAppDir()
+		if err != nil {
+			log.Printf("error ensuring directory, %v", err)
+			return nil, err
+		}
+	}
+	// create a file reference
+	file := fmt.Sprintf("%v%sserver.yaml", *dir, string(os.PathSeparator))
+
+	// open the file for reading
+	// file exists!
+	b, err := os.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrReadFile, err)
+	}
+
+	// unmarshal into go struct
+	var conf types.ServerConf
+	err = yaml.Unmarshal(b, &conf)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrUnmarshal, err)
+	}
+	return &conf, nil
+}
+
+func SaveConf(url string) error {
+	dir, err := ensureAppDir()
+	if err != nil {
+		return err
+	}
+	if f == nil {
+		f, err = os.Create(filepath.Join(dir, "server.yaml"))
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrWriteFile, err)
+		}
+		defer f.Close()
+	}
+
+	conf := &types.ServerConf{
+		Server: url,
+	}
+
+	c, err := yaml.Marshal(conf)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrUnmarshal, err)
+	}
+	_, err = f.Write(c)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrSaveConf, err)
+	}
+	return nil
+}

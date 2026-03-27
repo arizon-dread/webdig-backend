@@ -5,13 +5,24 @@
     "version": "0.2.0",
     "configurations": [
 
+
+
         {
-            "name": "Launch Package",
+            "name": "Launch api",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/webdig-api/webdig-api.go",
-            "buildFlags": "-gcflags='all=-N -l'"
+            "buildFlags": "-gcflags='all=-N -l'",
+        },
+        {
+            "name": "launch cli",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/webdig-cli/webdig.go",
+            "buildFlags": "-gcflags='all=-N -l'",
+            "args": ["-s", "http://localhost:8080/api/dig", "barbro.se"]
         },
         {
             "name": "Debug built binary",

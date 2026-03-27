@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/arizon-dread/webdig-backend/config"
-	"github.com/arizon-dread/webdig-backend/internal"
+	"github.com/arizon-dread/webdig-backend/internal/dns"
 	"github.com/arizon-dread/webdig-backend/pkg/types"
 )
 
-// Unmarshal request, call internal.Lookup to lookup the matching DNS<->IP.
+// Lookup unmarshals the request, calls internal.Lookup to lookup the matching DNS<->IP.
 // Return a 200 OK with matches for each server group if the address is found.
 // Return a 400 Bad Request if the request cannot be marshalled into a Go struct.
 // Return a 404 Not Found if no address is found.
@@ -26,17 +26,24 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	var req types.Req
-	json.Unmarshal(b, &req)
+	err = json.Unmarshal(b, &req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Could not unmarshal request into go struct."))
+	}
+	f := false
+	if req.CNAME == nil {
+		req.CNAME = &f
+	}
 
 	var status int = http.StatusOK
-	resp, err := internal.Lookup(r.Context(), req)
+	resp, err := dns.Lookup(r.Context(), req)
 	if err != nil {
 		if strings.Contains(err.Error(), "could not find dns record") {
 			status = http.StatusNotFound
 		} else {
 			status = http.StatusBadRequest
 		}
-
 	}
 	respJSON, err := json.Marshal(resp)
 	if err != nil {
@@ -45,10 +52,9 @@ func Lookup(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 	w.Write([]byte(respJSON))
-
 }
 
-// Kubernetes healthcheck endpoint.
+// Healthz is the Kubernetes healthcheck endpoint.
 func Healthz(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Healthy"))
 }

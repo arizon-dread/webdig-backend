@@ -1,10 +1,11 @@
-package internal
+package dns
 
 import (
 	"context"
 	"fmt"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -30,7 +31,7 @@ func Lookup(ctx context.Context, req types.Req) (types.Resp, error) {
 		lookupDNS(ctx, serverGroup, isDNS(), req, &resp)
 	}
 
-	//Find out if we have a no-hit result and return 404.
+	// Find out if we have a no-hit result and return 404.
 	none := true
 	if isDNS() {
 		for _, result := range resp.Results {
@@ -59,7 +60,7 @@ func Lookup(ctx context.Context, req types.Req) (types.Resp, error) {
 }
 
 func removeDuplicates(isDNS bool, resp *types.Resp) {
-	//remove duplicates if configured
+	// remove duplicates if configured
 	cfg := config.GetInstance()
 	type dnsContent struct {
 		addresses []string
@@ -78,7 +79,6 @@ func removeDuplicates(isDNS bool, resp *types.Resp) {
 			rslt[res.Name] = res.IPAddresses
 		}
 	} else {
-
 		for _, res := range resp.Results {
 			slices.Sort(res.DnsNames)
 			res.DnsNames = slices.Compact(res.DnsNames)
@@ -90,7 +90,7 @@ func removeDuplicates(isDNS bool, resp *types.Resp) {
 		if len(v.filter) > 0 {
 			rslt[k] = slices.DeleteFunc[[]string, string](rslt[k], func(e string) bool {
 				for _, res := range resp.Results {
-					if res.Name != k && slices.Contains(dns[k].filter, res.Name) { //don't check duplicates on the current node k within the current result, then it'd be self comparing, check if the current node has a filter entry with the name of the res
+					if res.Name != k && slices.Contains(dns[k].filter, res.Name) { // don't check duplicates on the current node k within the current result, then it'd be self comparing, check if the current node has a filter entry with the name of the res
 						if isDNS {
 							return slices.Contains(res.IPAddresses, e)
 						} else {
@@ -121,9 +121,12 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 		go func(wg *sync.WaitGroup, i int, ip string) {
 			defer wg.Done()
 			if isDNS {
-				ips, err := lookupIPforDNSandServer(ctx, req.Host, ip)
+				ips, cname, err := lookupIPforDNSandServer(ctx, req.Host, ip, *req.CNAME)
 				if err != nil {
-					result.Err = err
+					// error-type checking
+					// log.Printf("%v", formatDNSError(err))
+
+					result.Err = err // fmt.Errorf("%v", err.Error())
 				}
 				if len(ips) > 0 {
 					for _, ip := range ips {
@@ -132,8 +135,9 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 						}
 					}
 				}
+				result.Cname = cname
 			} else {
-				hosts, err := lookupDNSforIpAndServer(ctx, req.Host, ip)
+				hosts, err := lookupDNSforIPAndServer(ctx, req.Host, ip)
 				if err != nil {
 					result.Err = err
 				}
@@ -149,26 +153,59 @@ func lookupDNS(ctx context.Context, serverGroup config.ServerGroup, isDNS bool, 
 	resp.Results = append(resp.Results, result)
 }
 
-func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string) ([]net.IP, error) {
+func lookupIPforDNSandServer(ctx context.Context, dnsName string, dnsServer string, lookupCNAME bool) ([]net.IP, string, error) {
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
+	cname := ""
+	if lookupCNAME {
+		arecord, err := resolveCNAME(ctx, dnsName, dnsServer)
+
+		if err == nil && cname == "" && !cEQa(dnsName, arecord) {
+			cname = arecord
+		}
+	}
 	ips, err := r.LookupIP(ctx, "ip4", dnsName)
 	if err != nil {
 		if len(ips) > 0 {
-			return ips, err
+			return ips, cname, err
 		}
-		return nil, err
+		return nil, cname, err
 	}
-	return ips, nil
+	return ips, cname, nil
 }
 
-func lookupDNSforIpAndServer(ctx context.Context, ip string, dnsServer string) ([]string, error) {
+func cEQa(c string, a string) bool {
+	a = ensureDotSuffix(a)
+	c = ensureDotSuffix(c)
+	return c == a
+}
 
+func ensureDotSuffix(s string) string {
+	if !strings.HasSuffix(s, ".") {
+		return fmt.Sprintf("%v.", s)
+	}
+	return s
+}
+
+func resolveCNAME(ctx context.Context, c string, dnsServer string) (string, error) {
+	r, cancel := getResolver(ctx, dnsServer)
+	defer cancel()
+
+	n, err := r.LookupCNAME(ctx, c)
+	if err != nil {
+		return "", err
+	}
+	if cEQa(n, c) {
+		return n, nil
+	}
+	return resolveCNAME(ctx, n, dnsServer)
+}
+
+func lookupDNSforIPAndServer(ctx context.Context, ip string, dnsServer string) ([]string, error) {
 	r, cancel := getResolver(ctx, dnsServer)
 	defer cancel()
 
 	return r.LookupAddr(ctx, ip)
-
 }
 
 // Gets a net.Dialer inside a net.Resolver to perform dns lookup
