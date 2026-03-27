@@ -19,7 +19,7 @@ var (
 
 var (
 	ErrMakingDirectory = errors.New("unable to make configDir")
-	ErrOpenFIle        = errors.New("uanble to open file")
+	ErrOpenFile        = errors.New("uanble to open file")
 	ErrReadFile        = errors.New("unable to read file")
 	ErrUnmarshal       = errors.New("unable to unmarshal file into go struct")
 	ErrWriteFile       = errors.New("unable to write to config file")
