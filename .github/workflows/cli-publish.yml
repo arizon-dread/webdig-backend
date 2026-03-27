@@ -22,7 +22,7 @@ jobs:
         binary_name: "wdig"
         extra_files: README.md
         project_path: ./cmd/webdig-cli/webdig.go
-    - uses: wangyoucao577/go-release-action@v1.35
+    - uses: wangyoucao577/go-release-action@v1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: windows
