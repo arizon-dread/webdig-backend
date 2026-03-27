@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.25-alpine AS build
+FROM docker.io/golang:1.26-alpine AS build
 LABEL MAINTAINER=github.com/arizon-dread
 
 WORKDIR /usr/local/go/src/github.com/arizon-dread/webdig-backend
@@ -9,7 +9,7 @@ RUN apk update && apk add --no-cache git
 RUN go build -v -o /usr/local/bin/webdig-backend/ ./...
 
 
-FROM docker.io/golang:1.25-alpine AS final
+FROM dhi.io/alpine-base:3.23 AS final
 WORKDIR /go/bin
 ARG VERSION
 ENV GENERAL_VERSION=${VERSION}
