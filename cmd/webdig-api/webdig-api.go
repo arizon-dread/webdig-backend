@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	readConfig()
 	cfg := config.GetInstance()
 	mux := http.NewServeMux()
@@ -24,7 +23,7 @@ func main() {
 		AllowedHeaders: cfg.General.Cors.Headers,
 	})
 
-	go mux.HandleFunc("POST /api/dig", api.Lookup)
+	mux.HandleFunc("POST /api/dig", api.Lookup)
 	mux.HandleFunc("GET /api/version", api.Version)
 	mux.HandleFunc("GET /healthz", api.Healthz)
 	handler := c.Handler(mux)
@@ -42,9 +41,8 @@ func main() {
 }
 
 func readConfig() {
-
 	cfg := config.GetInstance()
-	//We use a dedicated folder for the config file to ease the configMap volume mount.
+	// We use a dedicated folder for the config file to ease the configMap volume mount.
 	viper.SetConfigFile("./conf/config.yaml")
 	viper.SetConfigType("yaml")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -53,7 +51,7 @@ func readConfig() {
 	if err != nil {
 		breakOnNoConfig(err)
 	}
-	//all keys that are read from config will get overwritten by their env equivalents, as long as they exist in config (empty or not)
+	// all keys that are read from config will get overwritten by their env equivalents, as long as they exist in config (empty or not)
 	for _, key := range viper.AllKeys() {
 		val := viper.Get(key)
 		viper.Set(key, val)
@@ -62,7 +60,7 @@ func readConfig() {
 	if err != nil {
 		breakOnNoConfig(err)
 	}
-	//Perhaps we need to check that they don't circularly reference eachother...
+	// Perhaps we need to check that they don't circularly reference eachother...
 	atLeastOneUnfiltered := false
 	for _, v := range cfg.DNS {
 		if len(v.FilterDuplicates) == 0 {
