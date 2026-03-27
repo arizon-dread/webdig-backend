@@ -26,7 +26,14 @@ func MakeCall(req types.Req, conf *types.ServerConf) (*types.Resp, error) {
 		return nil, fmt.Errorf("error during lookup: %w", err)
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
+
+	switch res.StatusCode {
+	case http.StatusOK:
+		break
+	case http.StatusNotFound:
+		return nil, fmt.Errorf("not found")
+	default:
+
 		return nil, fmt.Errorf("server returned status code: %d", res.StatusCode)
 	}
 	resp := &types.Resp{}
