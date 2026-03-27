@@ -1,10 +1,12 @@
-# WebDig-backend
+# WebDig
+
+## WebDig-backend
 
 A rest api that takes a POST request to the /api/dig endpoint containting a json with a single field, "host" which in turn should contain either an IPv4 address or a dns-name. It will do a dnslookup and return a response with the result.
 
 Releases are provided as src code and an open container image repo exists at [docker hub](docker.io/arizon/webdig-backend)
 
-## Configuration
+### Configuration
 
 The DNS servers are configured using the `conf/config.yaml` file.  
 Example:
@@ -26,7 +28,7 @@ dns:
     filterDuplicates: ['internet'] #If set, hits in this group that exists in "internet" will be removed from this result section.
 ```
 
-### filterDuplicates
+#### filterDuplicates
 
 The filterDuplicates setting is used if you specify several groups of dns servers and i.e. your internal dns servers mirror internet dns, but you want to display external addresses only in the 'internet' response. Then you would want to set `filterDuplicates: ['internet']` on your internal dns server group. The config here is just a public example. The point of using multiple dns server groups is to do dns lookups for different networks and avoid displaying mirrored hits in one or more groups.
 
@@ -34,11 +36,11 @@ Note that at least one dns server group must have `filterDuplicates: []` since a
 
 Duplicate dns records or ip addresses within one servergroup will always be sorted and filtered, no matter this setting. If in this example above, `8.8.4.4` and `8.8.8.8` both reply with the same result for a lookup request, the response will only contain one entry of that hit for that dns server group.
 
-# Samples
+## Samples
 
 The above config is used for these samples.
 
-## request 1
+### request 1
 
 ```json
 {
@@ -46,7 +48,7 @@ The above config is used for these samples.
 }
 ```
 
-## response 1
+### response 1
 
 ```json
 {
@@ -73,7 +75,7 @@ The above config is used for these samples.
 }
 ```
 
-## request 2
+### request 2
 
 ```json
 {
@@ -81,7 +83,7 @@ The above config is used for these samples.
 }
 ```
 
-## response 2
+### response 2
 
 Note that `filterDuplicates: ['internet']` on OpenDNS filters all the hits here. If it would've been set to `[]` the `dnsNames` arrays would've contained the same content in both result entries.  
 
@@ -114,3 +116,8 @@ Note that `filterDuplicates: ['internet']` on OpenDNS filters all the hits here.
    ]
 }
 ```
+
+## wdig - the WebDig cli app
+
+Download the binary from the Release section on the right.  
+Run `wdig -h` to get started!
