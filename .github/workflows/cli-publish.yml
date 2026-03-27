@@ -21,11 +21,13 @@ jobs:
         goversion: "https://go.dev/dl/go1.26.1.linux-amd64.tar.gz"
         binary_name: "wdig"
         extra_files: README.md
+        project_path: ./cmd/webdig-cli/webdig.go
     - uses: wangyoucao577/go-release-action@v1.35
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: windows
         goarch: amd64
         goversion: "https://go.dev/dl/go1.26.1.linux-amd64.tar.gz"
-        binary_name: "wdig"
+        binary_name: "wdig.exe"
         extra_files: README.md
+        project_path: ./cmd/webdig-cli/webdig.go
